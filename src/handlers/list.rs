@@ -1,0 +1,35 @@
+use std::sync::Arc;
+
+use axum::extract::State;
+use reqwest::StatusCode;
+use serde::Deserialize;
+
+use crate::{DB, types::*, ulid::Ulid};
+
+#[derive(Deserialize)]
+pub struct Pagination {
+    page: Option<i64>,
+    per_page: Option<i64>,
+}
+
+pub async fn list(
+    State(db): State<Arc<DB>>,
+    UrlQuery(pagination): UrlQuery<Pagination>,
+) -> Result<AxumJson<Vec<Ulid>>, StatusCode> {
+    const MAX_PER_PAGE: i64 = 1000;
+    const DEFAULT_PER_PAGE: i64 = 10;
+
+    if let Some(per_page) = pagination.per_page
+        && per_page > MAX_PER_PAGE
+    {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    db.list_themes(
+        pagination.page.unwrap_or(1),
+        pagination.per_page.unwrap_or(DEFAULT_PER_PAGE),
+    )
+    .await
+    .map(AxumJson)
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
