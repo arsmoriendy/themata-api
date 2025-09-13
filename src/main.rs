@@ -127,11 +127,7 @@ struct ThemeContent {
 type Schemes = HashMap<String, ColorScheme>;
 type ColorScheme = HashMap<String, Rgb>;
 #[derive(Serialize, Deserialize)]
-struct Rgb {
-    r: u8,
-    g: u8,
-    b: u8,
-}
+struct Rgb(u8, u8, u8);
 
 impl DB {
     async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ThemeContent>, SqlxError> {
