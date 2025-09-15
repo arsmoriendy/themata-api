@@ -124,15 +124,15 @@ struct ThemeWithName {
     schemes: Theme,
 }
 
-type Theme = Vec<SchemeEntry>;
+type Theme = Vec<ColorSchemeEntry>;
 
 #[derive(Serialize, Deserialize)]
-struct SchemeEntry(String, Scheme);
+struct ColorSchemeEntry(String, ColorScheme);
 
-type Scheme = Vec<ColorEntry>;
+type ColorScheme = Vec<RgbEntry>;
 
 #[derive(Serialize, Deserialize)]
-struct ColorEntry(String, Rgb);
+struct RgbEntry(String, Rgb);
 
 #[derive(Serialize, Deserialize)]
 struct Rgb(u8, u8, u8);
