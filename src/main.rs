@@ -17,7 +17,7 @@ use dotenvy::dotenv;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Pool, Postgres, query, query_as, query_scalar};
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use ulid::{PrimitiveUlid, Ulid};
 
 use crate::{env::ensure_envs, types::*};
@@ -124,8 +124,16 @@ struct ThemeContent {
     schemes: Schemes,
 }
 
-type Schemes = HashMap<String, ColorScheme>;
-type ColorScheme = HashMap<String, Rgb>;
+type Schemes = Vec<SchemePair>;
+
+#[derive(Serialize, Deserialize)]
+struct SchemePair(String, ColorScheme);
+
+type ColorScheme = Vec<ColorPair>;
+
+#[derive(Serialize, Deserialize)]
+struct ColorPair(String, Rgb);
+
 #[derive(Serialize, Deserialize)]
 struct Rgb(u8, u8, u8);
 
