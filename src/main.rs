@@ -118,13 +118,13 @@ struct DB {
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
-struct ThemeWithName {
+struct SchemesWithName {
     name: String,
     #[sqlx(json)]
-    schemes: Theme,
+    schemes: ColorSchemes,
 }
 
-type Theme = Vec<ColorSchemeEntry>;
+type ColorSchemes = Vec<ColorSchemeEntry>;
 
 #[derive(Serialize, Deserialize)]
 struct ColorSchemeEntry(String, ColorScheme);
@@ -138,7 +138,7 @@ struct RgbEntry(String, Rgb);
 struct Rgb(u8, u8, u8);
 
 impl DB {
-    async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ThemeWithName>, SqlxError> {
+    async fn read_theme(&self, ulid: &Ulid) -> Result<Option<SchemesWithName>, SqlxError> {
         query_as("SELECT name, schemes FROM themes WHERE ulid = $1")
             .bind(ulid)
             .fetch_optional(&self.pool)
@@ -155,7 +155,7 @@ impl DB {
     async fn create_theme(
         &self,
         name: &str,
-        schemes: &SqlxJson<Theme>,
+        schemes: &SqlxJson<ColorSchemes>,
         owner: &Ulid,
     ) -> Result<Ulid, SqlxError> {
         query_scalar("INSERT INTO themes (ulid, name, schemes, owner) VALUES ($1, $2, $3, $4) RETURNING ulid")
@@ -178,7 +178,7 @@ impl DB {
     async fn update_theme(
         &self,
         ulid: &Ulid,
-        theme: &SqlxJson<ThemeWithName>,
+        theme: &SqlxJson<SchemesWithName>,
     ) -> Result<(), SqlxError> {
         query("UPDATE themes SET name = $1, schemes = $2 WHERE ulid = $3")
             .bind(&theme.name)
