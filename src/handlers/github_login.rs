@@ -128,7 +128,14 @@ pub async fn github_login(
         }
     };
 
-    let claim = JWTSessionClaims { sub: user_ulid };
+    let Ok(Some(username)) = db.read_username(&user_ulid).await else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+
+    let claim = JWTSessionClaims {
+        sub: user_ulid,
+        preferred_username: username,
+    };
 
     let jwt = match jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),

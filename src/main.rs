@@ -18,7 +18,6 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Pool, Postgres, query, query_as, query_scalar};
 use std::sync::Arc;
-use ulid::{PrimitiveUlid, Ulid};
 
 use crate::{env::ensure_envs, types::*};
 
@@ -112,6 +111,7 @@ impl FromRequestParts<Arc<DB>> for Session {
 #[derive(Serialize, Deserialize)]
 struct JWTSessionClaims {
     sub: Ulid,
+    preferred_username: String,
 }
 
 struct DB {
