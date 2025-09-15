@@ -45,6 +45,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/delete/{ulid}", delete(handlers::delete))
         .route("/login/github", get(handlers::github_login))
         .route("/update_username", patch(handlers::update_username))
+        .route("/read_username", get(handlers::read_username))
         .route("/authenticate", get(handlers::authenticate))
         .with_state(Arc::new(db));
 
@@ -203,6 +204,13 @@ impl DB {
             .bind(email)
             .bind(PrimitiveUlid::new().to_string())
             .fetch_one(&self.pool)
+            .await
+    }
+
+    async fn read_username(&self, user_ulid: &Ulid) -> Result<Option<String>, SqlxError> {
+        query_scalar("SELECT username FROM users WHERE ulid = $1")
+            .bind(user_ulid)
+            .fetch_optional(&self.pool)
             .await
     }
 
