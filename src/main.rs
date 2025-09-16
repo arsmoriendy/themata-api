@@ -44,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/delete/{ulid}", delete(handlers::delete))
         .route("/login/github", get(handlers::github_login))
         .route("/update_username", patch(handlers::update_username))
-        .route("/read_username", get(handlers::read_username))
+        .route("/read_username/{user_ulid}", get(handlers::read_username))
         .route("/authenticate", get(handlers::authenticate))
         .with_state(Arc::new(db));
 

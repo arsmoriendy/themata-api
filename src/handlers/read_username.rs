@@ -3,11 +3,11 @@ use std::sync::Arc;
 use axum::extract::State;
 use reqwest::StatusCode;
 
-use crate::{DB, Session};
+use crate::{DB, types::*};
 
 /// Returns 400 if new_username isn't unique
 pub async fn read_username(
-    Session(user_ulid): Session,
+    UrlPath(user_ulid): UrlPath<Ulid>,
     State(db): State<Arc<DB>>,
 ) -> Result<String, StatusCode> {
     let Some(username) = db
