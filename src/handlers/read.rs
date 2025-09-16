@@ -3,12 +3,12 @@ use std::sync::Arc;
 use axum::extract::State;
 use reqwest::StatusCode;
 
-use crate::{DB, SchemesWithName, types::*, ulid::Ulid};
+use crate::{DB, Theme, types::*, ulid::Ulid};
 
 pub async fn read(
     State(db): State<Arc<DB>>,
     UrlPath(ulid): UrlPath<Ulid>,
-) -> Result<AxumJson<SchemesWithName>, StatusCode> {
+) -> Result<AxumJson<Theme>, StatusCode> {
     let row = db
         .read_theme(&ulid)
         .await

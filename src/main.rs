@@ -119,6 +119,14 @@ struct DB {
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
+struct Theme {
+    name: String,
+    #[sqlx(json)]
+    schemes: ColorSchemes,
+    owner: Ulid,
+}
+
+#[derive(FromRow, Serialize, Deserialize)]
 struct SchemesWithName {
     name: String,
     #[sqlx(json)]
@@ -139,8 +147,8 @@ struct RgbEntry(String, Rgb);
 struct Rgb(u8, u8, u8);
 
 impl DB {
-    async fn read_theme(&self, ulid: &Ulid) -> Result<Option<SchemesWithName>, SqlxError> {
-        query_as("SELECT name, schemes FROM themes WHERE ulid = $1")
+    async fn read_theme(&self, ulid: &Ulid) -> Result<Option<Theme>, SqlxError> {
+        query_as("SELECT name, schemes, owner FROM themes WHERE ulid = $1")
             .bind(ulid)
             .fetch_optional(&self.pool)
             .await
