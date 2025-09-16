@@ -6,7 +6,7 @@ use sqlx::{Decode, Encode, Postgres, postgres::PgTypeInfo};
 pub use ulid::Ulid as PrimitiveUlid;
 
 /// Ulid wrapper that works with serde and sqlx postgres
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct Ulid(pub PrimitiveUlid);
 
 struct UlidVisitor;

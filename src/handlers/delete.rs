@@ -2,9 +2,11 @@ use std::sync::Arc;
 
 use axum::extract::State;
 use reqwest::StatusCode;
+use tracing::instrument;
 
 use crate::{DB, Session, types::*, ulid::Ulid};
 
+#[instrument]
 pub async fn delete(
     Session(user_ulid): Session,
     State(db): State<Arc<DB>>,

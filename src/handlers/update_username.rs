@@ -2,10 +2,12 @@ use std::sync::Arc;
 
 use axum::extract::State;
 use reqwest::StatusCode;
+use tracing::instrument;
 
 use crate::{DB, Session, types::*};
 
 /// Returns 400 if new_username isn't unique
+#[instrument]
 pub async fn update_username(
     Session(user_ulid): Session,
     State(db): State<Arc<DB>>,

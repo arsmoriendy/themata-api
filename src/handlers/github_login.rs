@@ -6,14 +6,16 @@ use axum::{
 };
 use reqwest::{ClientBuilder, StatusCode, header::ACCEPT};
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
 use crate::{DB, JWTSessionClaims, env, types::*};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct GithubQueryParams {
     code: String,
 }
 
+#[instrument]
 pub async fn github_login(
     State(db): State<Arc<DB>>,
     UrlQuery(GithubQueryParams { code }): UrlQuery<GithubQueryParams>,

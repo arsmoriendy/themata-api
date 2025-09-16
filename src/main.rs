@@ -114,6 +114,7 @@ struct JWTSessionClaims {
     preferred_username: String,
 }
 
+#[derive(Debug)]
 struct DB {
     pool: Pool<Postgres>,
 }
@@ -126,7 +127,7 @@ struct Theme {
     owner: Ulid,
 }
 
-#[derive(FromRow, Serialize, Deserialize)]
+#[derive(FromRow, Serialize, Deserialize, Debug)]
 struct SchemesWithName {
     name: String,
     #[sqlx(json)]
@@ -135,15 +136,15 @@ struct SchemesWithName {
 
 type ColorSchemes = Vec<ColorSchemeEntry>;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct ColorSchemeEntry(String, ColorScheme);
 
 type ColorScheme = Vec<RgbEntry>;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct RgbEntry(String, Rgb);
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Rgb(u8, u8, u8);
 
 impl DB {

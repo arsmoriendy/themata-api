@@ -3,15 +3,17 @@ use std::sync::Arc;
 use axum::extract::State;
 use reqwest::StatusCode;
 use serde::Deserialize;
+use tracing::instrument;
 
 use crate::{DB, types::*, ulid::Ulid};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Pagination {
     page: Option<i64>,
     per_page: Option<i64>,
 }
 
+#[instrument]
 pub async fn list(
     State(db): State<Arc<DB>>,
     UrlQuery(pagination): UrlQuery<Pagination>,
