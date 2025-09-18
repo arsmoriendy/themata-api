@@ -119,20 +119,22 @@ struct DB {
     pool: Pool<Postgres>,
 }
 
-#[derive(FromRow, Serialize, Deserialize)]
-struct ReadData {
-    #[sqlx(flatten)]
-    #[serde(flatten)]
-    flatten: UpdateData,
-    owner: Ulid,
-}
-
 #[derive(FromRow, Serialize, Deserialize, Debug)]
-struct UpdateData {
+struct CreateData {
     name: String,
     #[sqlx(json)]
     schemes: ColorSchemes,
 }
+
+#[derive(FromRow, Serialize, Deserialize)]
+struct ReadData {
+    #[sqlx(flatten)]
+    #[serde(flatten)]
+    flatten: CreateData,
+    owner: Ulid,
+}
+
+type UpdateData = CreateData;
 
 type ColorSchemes = Vec<ColorSchemeEntry>;
 
@@ -164,14 +166,13 @@ impl DB {
 
     async fn create_theme(
         &self,
-        name: &str,
-        schemes: &SqlxJson<ColorSchemes>,
+        create_data: &CreateData,
         owner: &Ulid,
     ) -> Result<Ulid, SqlxError> {
         query_scalar("INSERT INTO themes (ulid, name, schemes, owner) VALUES ($1, $2, $3, $4) RETURNING ulid")
             .bind(Ulid(PrimitiveUlid::new()))
-            .bind(name)
-            .bind(schemes)
+            .bind(&create_data.name)
+            .bind(SqlxJson(&create_data.schemes))
             .bind(owner)
             .fetch_one(&self.pool)
             .await
@@ -185,11 +186,7 @@ impl DB {
             .await
     }
 
-    async fn update_theme(
-        &self,
-        ulid: &Ulid,
-        update_data: &SqlxJson<UpdateData>,
-    ) -> Result<(), SqlxError> {
+    async fn update_theme(&self, ulid: &Ulid, update_data: &UpdateData) -> Result<(), SqlxError> {
         query("UPDATE themes SET name = $1, schemes = $2 WHERE ulid = $3")
             .bind(&update_data.name)
             .bind(SqlxJson(&update_data.schemes))
