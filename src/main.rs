@@ -120,7 +120,7 @@ struct DB {
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
-struct Theme {
+struct ReadData {
     name: String,
     #[sqlx(json)]
     schemes: ColorSchemes,
@@ -128,7 +128,7 @@ struct Theme {
 }
 
 #[derive(FromRow, Serialize, Deserialize, Debug)]
-struct SchemesWithName {
+struct UpdateData {
     name: String,
     #[sqlx(json)]
     schemes: ColorSchemes,
@@ -148,7 +148,7 @@ struct RgbEntry(String, Rgb);
 struct Rgb(u8, u8, u8);
 
 impl DB {
-    async fn read_theme(&self, ulid: &Ulid) -> Result<Option<Theme>, SqlxError> {
+    async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ReadData>, SqlxError> {
         query_as("SELECT name, schemes, owner FROM themes WHERE ulid = $1")
             .bind(ulid)
             .fetch_optional(&self.pool)
@@ -188,7 +188,7 @@ impl DB {
     async fn update_theme(
         &self,
         ulid: &Ulid,
-        theme: &SqlxJson<SchemesWithName>,
+        theme: &SqlxJson<UpdateData>,
     ) -> Result<(), SqlxError> {
         query("UPDATE themes SET name = $1, schemes = $2 WHERE ulid = $3")
             .bind(&theme.name)

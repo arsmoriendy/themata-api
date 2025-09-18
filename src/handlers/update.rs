@@ -4,14 +4,14 @@ use axum::extract::State;
 use reqwest::StatusCode;
 use tracing::instrument;
 
-use crate::{DB, SchemesWithName, Session, types::*, ulid::Ulid};
+use crate::{DB, Session, UpdateData, types::*, ulid::Ulid};
 
 #[instrument]
 pub async fn update(
     Session(user_ulid): Session,
     State(db): State<Arc<DB>>,
     UrlPath(theme_ulid): UrlPath<Ulid>,
-    AxumJson(theme): AxumJson<SchemesWithName>,
+    AxumJson(theme): AxumJson<UpdateData>,
 ) -> StatusCode {
     let Ok(res) = db.read_theme_owner(&theme_ulid).await else {
         return StatusCode::INTERNAL_SERVER_ERROR;

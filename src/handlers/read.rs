@@ -4,13 +4,13 @@ use axum::extract::State;
 use reqwest::StatusCode;
 use tracing::instrument;
 
-use crate::{DB, Theme, types::*, ulid::Ulid};
+use crate::{DB, ReadData, types::*, ulid::Ulid};
 
 #[instrument]
 pub async fn read(
     State(db): State<Arc<DB>>,
     UrlPath(ulid): UrlPath<Ulid>,
-) -> Result<AxumJson<Theme>, StatusCode> {
+) -> Result<AxumJson<ReadData>, StatusCode> {
     let row = db
         .read_theme(&ulid)
         .await
