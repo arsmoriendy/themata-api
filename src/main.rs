@@ -121,9 +121,9 @@ struct DB {
 
 #[derive(FromRow, Serialize, Deserialize)]
 struct ReadData {
-    name: String,
-    #[sqlx(json)]
-    schemes: ColorSchemes,
+    #[sqlx(flatten)]
+    #[serde(flatten)]
+    flatten: UpdateData,
     owner: Ulid,
 }
 
