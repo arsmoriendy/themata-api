@@ -124,6 +124,7 @@ struct CreateData {
     name: String,
     #[sqlx(json)]
     schemes: ColorSchemes,
+    description: Option<String>,
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
@@ -151,7 +152,7 @@ struct Rgb(u8, u8, u8);
 
 impl DB {
     async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ReadData>, SqlxError> {
-        query_as("SELECT name, schemes, owner FROM themes WHERE ulid = $1")
+        query_as("SELECT name, schemes, owner, description FROM themes WHERE ulid = $1")
             .bind(ulid)
             .fetch_optional(&self.pool)
             .await
@@ -169,11 +170,12 @@ impl DB {
         create_data: &CreateData,
         owner: &Ulid,
     ) -> Result<Ulid, SqlxError> {
-        query_scalar("INSERT INTO themes (ulid, name, schemes, owner) VALUES ($1, $2, $3, $4) RETURNING ulid")
+        query_scalar("INSERT INTO themes (ulid, name, schemes, owner, description) VALUES ($1, $2, $3, $4, $5) RETURNING ulid")
             .bind(Ulid(PrimitiveUlid::new()))
             .bind(&create_data.name)
             .bind(SqlxJson(&create_data.schemes))
             .bind(owner)
+            .bind(&create_data.description)
             .fetch_one(&self.pool)
             .await
     }
@@ -187,9 +189,10 @@ impl DB {
     }
 
     async fn update_theme(&self, ulid: &Ulid, update_data: &UpdateData) -> Result<(), SqlxError> {
-        query("UPDATE themes SET name = $1, schemes = $2 WHERE ulid = $3")
+        query("UPDATE themes SET name = $1, schemes = $2, description = $3 WHERE ulid = $4")
             .bind(&update_data.name)
             .bind(SqlxJson(&update_data.schemes))
+            .bind(&update_data.description)
             .bind(ulid)
             .execute(&self.pool)
             .await?;
