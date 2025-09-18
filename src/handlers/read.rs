@@ -16,9 +16,9 @@ pub async fn read(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let Some(tc) = row else {
+    let Some(read_data) = row else {
         return Err(StatusCode::NOT_FOUND);
     };
 
-    Ok(AxumJson(tc))
+    Ok(AxumJson(read_data))
 }

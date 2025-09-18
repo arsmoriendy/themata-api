@@ -11,7 +11,7 @@ pub async fn update(
     Session(user_ulid): Session,
     State(db): State<Arc<DB>>,
     UrlPath(theme_ulid): UrlPath<Ulid>,
-    AxumJson(theme): AxumJson<UpdateData>,
+    AxumJson(update_data): AxumJson<UpdateData>,
 ) -> StatusCode {
     let Ok(res) = db.read_theme_owner(&theme_ulid).await else {
         return StatusCode::INTERNAL_SERVER_ERROR;
@@ -25,7 +25,7 @@ pub async fn update(
         return StatusCode::FORBIDDEN;
     }
 
-    if let Err(e) = db.update_theme(&theme_ulid, &SqlxJson(theme)).await {
+    if let Err(e) = db.update_theme(&theme_ulid, &SqlxJson(update_data)).await {
         return match e {
             SqlxError::RowNotFound => StatusCode::NOT_FOUND,
             _ => StatusCode::INTERNAL_SERVER_ERROR,

@@ -188,11 +188,11 @@ impl DB {
     async fn update_theme(
         &self,
         ulid: &Ulid,
-        theme: &SqlxJson<UpdateData>,
+        update_data: &SqlxJson<UpdateData>,
     ) -> Result<(), SqlxError> {
         query("UPDATE themes SET name = $1, schemes = $2 WHERE ulid = $3")
-            .bind(&theme.name)
-            .bind(SqlxJson(&theme.schemes))
+            .bind(&update_data.name)
+            .bind(SqlxJson(&update_data.schemes))
             .bind(ulid)
             .execute(&self.pool)
             .await?;
