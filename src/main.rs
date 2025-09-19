@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/list", get(handlers::list))
-        .route("/create/{name}", post(handlers::create))
+        .route("/create", post(handlers::create))
         .route("/read/{ulid}", get(handlers::read))
         .route("/update/{ulid}", put(handlers::update))
         .route("/delete/{ulid}", delete(handlers::delete))
