@@ -5,7 +5,7 @@ use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::instrument;
 
-use crate::{DB, types::*, ulid::Ulid};
+use crate::{DB, ListData, types::*};
 
 #[derive(Deserialize, Debug)]
 pub struct Pagination {
@@ -17,8 +17,8 @@ pub struct Pagination {
 pub async fn list(
     State(db): State<Arc<DB>>,
     UrlQuery(pagination): UrlQuery<Pagination>,
-) -> Result<AxumJson<Vec<Ulid>>, StatusCode> {
-    const MAX_PER_PAGE: i64 = 1000;
+) -> Result<AxumJson<Vec<ListData>>, StatusCode> {
+    const MAX_PER_PAGE: i64 = 100;
     const DEFAULT_PER_PAGE: i64 = 10;
 
     if let Some(per_page) = pagination.per_page

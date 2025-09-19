@@ -135,6 +135,14 @@ struct ReadData {
     owner: Ulid,
 }
 
+#[derive(FromRow, Serialize, Deserialize)]
+struct ListData {
+    ulid: Ulid,
+    #[sqlx(flatten)]
+    #[serde(flatten)]
+    flatten: ReadData,
+}
+
 type UpdateData = CreateData;
 
 type ColorSchemes = Vec<ColorSchemeEntry>;
@@ -180,12 +188,14 @@ impl DB {
             .await
     }
 
-    async fn list_themes(&self, page: i64, per_page: i64) -> Result<Vec<Ulid>, SqlxError> {
-        query_scalar("SELECT ulid FROM themes ORDER BY ulid LIMIT $1 OFFSET $2")
-            .bind(per_page)
-            .bind((page - 1) * per_page)
-            .fetch_all(&self.pool)
-            .await
+    async fn list_themes(&self, page: i64, per_page: i64) -> Result<Vec<ListData>, SqlxError> {
+        query_as(
+            "SELECT ulid, name, schemes, owner, description FROM themes ORDER BY ulid LIMIT $1 OFFSET $2",
+        )
+        .bind(per_page)
+        .bind((page - 1) * per_page)
+        .fetch_all(&self.pool)
+        .await
     }
 
     async fn update_theme(&self, ulid: &Ulid, update_data: &UpdateData) -> Result<(), SqlxError> {
