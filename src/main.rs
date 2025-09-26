@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
     // init db
     sqlx::any::install_default_drivers();
     let db = DB {
-        pool: Pool::connect_lazy(&env::DB_URL)?,
+        pool: Pool::connect(&env::DB_URL).await?,
     };
 
     let app = Router::new()
