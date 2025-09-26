@@ -18,6 +18,7 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Pool, Postgres, query, query_as, query_scalar};
 use std::sync::Arc;
+use tower_http::cors::CorsLayer;
 
 use crate::{env::ensure_envs, types::*};
 
@@ -46,6 +47,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/update_username", patch(handlers::update_username))
         .route("/read_username/{user_ulid}", get(handlers::read_username))
         .route("/authenticate", get(handlers::authenticate))
+        .layer(CorsLayer::permissive())
         .with_state(Arc::new(db));
 
     let listener = tokio::net::TcpListener::bind(&*env::LISTEN_ADDR).await?;
