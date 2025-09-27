@@ -1,3 +1,4 @@
+mod data;
 mod env;
 mod handlers;
 mod types;
@@ -16,11 +17,15 @@ use axum_extra::{
 use dotenvy::dotenv;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Pool, Postgres, query, query_as, query_scalar};
+use sqlx::{Pool, Postgres, query, query_as, query_scalar};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 
-use crate::{env::ensure_envs, types::*};
+use crate::{
+    data::{CreateData, ListData, ReadData, UpdateData},
+    env::ensure_envs,
+    types::*,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -120,32 +125,6 @@ struct JWTSessionClaims {
 struct DB {
     pool: Pool<Postgres>,
 }
-
-#[derive(FromRow, Serialize, Deserialize, Debug)]
-struct CreateData {
-    name: String,
-    #[sqlx(json)]
-    schemes: ColorSchemes,
-    description: Option<String>,
-}
-
-#[derive(FromRow, Serialize, Deserialize)]
-struct ReadData {
-    #[sqlx(flatten)]
-    #[serde(flatten)]
-    flatten: CreateData,
-    owner: Ulid,
-}
-
-#[derive(FromRow, Serialize, Deserialize)]
-struct ListData {
-    ulid: Ulid,
-    #[sqlx(flatten)]
-    #[serde(flatten)]
-    flatten: ReadData,
-}
-
-type UpdateData = CreateData;
 
 type ColorSchemes = Vec<ColorSchemeEntry>;
 
