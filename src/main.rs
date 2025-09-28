@@ -1,4 +1,3 @@
-mod data;
 mod env;
 mod handlers;
 mod types;
@@ -16,16 +15,11 @@ use axum_extra::{
 };
 use dotenvy::dotenv;
 use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
-use sqlx::{Pool, Postgres, query, query_as, query_scalar};
+use sqlx::Pool;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 
-use crate::{
-    data::{CreateData, ListData, ReadData, UpdateData},
-    env::ensure_envs,
-    types::*,
-};
+use crate::{env::ensure_envs, types::*};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -112,129 +106,5 @@ impl FromRequestParts<Arc<DB>> for Session {
         }
 
         Ok(Session(user_ulid))
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-struct JWTSessionClaims {
-    sub: Ulid,
-    preferred_username: String,
-}
-
-#[derive(Debug)]
-struct DB {
-    pool: Pool<Postgres>,
-}
-
-type ColorSchemes = Vec<ColorSchemeEntry>;
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ColorSchemeEntry(String, ColorScheme);
-
-type ColorScheme = Vec<RgbEntry>;
-
-#[derive(Serialize, Deserialize, Debug)]
-struct RgbEntry(String, Rgb);
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Rgb(u8, u8, u8);
-
-impl DB {
-    async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ReadData>, SqlxError> {
-        query_as("SELECT name, schemes, owner, description FROM themes WHERE ulid = $1")
-            .bind(ulid)
-            .fetch_optional(&self.pool)
-            .await
-    }
-
-    async fn read_theme_owner(&self, theme_ulid: &Ulid) -> Result<Option<Ulid>, SqlxError> {
-        query_scalar("SELECT owner FROM themes WHERE ulid = $1")
-            .bind(theme_ulid)
-            .fetch_optional(&self.pool)
-            .await
-    }
-
-    async fn create_theme(
-        &self,
-        create_data: &CreateData,
-        owner: &Ulid,
-    ) -> Result<Ulid, SqlxError> {
-        query_scalar("INSERT INTO themes (ulid, name, schemes, owner, description) VALUES ($1, $2, $3, $4, $5) RETURNING ulid")
-            .bind(Ulid(PrimitiveUlid::new()))
-            .bind(&create_data.name)
-            .bind(SqlxJson(&create_data.schemes))
-            .bind(owner)
-            .bind(&create_data.description)
-            .fetch_one(&self.pool)
-            .await
-    }
-
-    async fn list_themes(&self, page: i64, per_page: i64) -> Result<Vec<ListData>, SqlxError> {
-        query_as(
-            "SELECT ulid, name, schemes, owner, description FROM themes ORDER BY ulid LIMIT $1 OFFSET $2",
-        )
-        .bind(per_page)
-        .bind((page - 1) * per_page)
-        .fetch_all(&self.pool)
-        .await
-    }
-
-    async fn update_theme(&self, ulid: &Ulid, update_data: &UpdateData) -> Result<(), SqlxError> {
-        query("UPDATE themes SET name = $1, schemes = $2, description = $3 WHERE ulid = $4")
-            .bind(&update_data.name)
-            .bind(SqlxJson(&update_data.schemes))
-            .bind(&update_data.description)
-            .bind(ulid)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
-    }
-
-    async fn delete_theme(&self, ulid: &Ulid) -> Result<(), SqlxError> {
-        let _ = query("DELETE FROM themes WHERE ulid = $1")
-            .bind(ulid)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
-    }
-
-    async fn create_user(&self, email: &str) -> Result<Ulid, SqlxError> {
-        query_scalar("INSERT INTO users (ulid, email, username) VALUES ($1, $2, $3) RETURNING ulid")
-            .bind(Ulid(PrimitiveUlid::new()))
-            .bind(email)
-            .bind(PrimitiveUlid::new().to_string())
-            .fetch_one(&self.pool)
-            .await
-    }
-
-    async fn read_username(&self, user_ulid: &Ulid) -> Result<Option<String>, SqlxError> {
-        query_scalar("SELECT username FROM users WHERE ulid = $1")
-            .bind(user_ulid)
-            .fetch_optional(&self.pool)
-            .await
-    }
-
-    async fn update_username(&self, user_ulid: &Ulid, new_username: &str) -> Result<(), SqlxError> {
-        query("UPDATE users SET username = $2 WHERE ulid = $1")
-            .bind(user_ulid)
-            .bind(new_username)
-            .execute(&self.pool)
-            .await
-            .map(|_| ())
-    }
-
-    async fn read_user(&self, email: &str) -> Result<Option<Ulid>, SqlxError> {
-        query_scalar("SELECT ulid FROM users WHERE email = $1")
-            .bind(email)
-            .fetch_optional(&self.pool)
-            .await
-    }
-
-    async fn check_user_exists(&self, user_ulid: &Ulid) -> Result<bool, SqlxError> {
-        query("SELECT NULL FROM users WHERE ulid = $1")
-            .bind(user_ulid)
-            .fetch_optional(&self.pool)
-            .await
-            .map(|row| row.is_some())
     }
 }
