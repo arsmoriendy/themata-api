@@ -1,17 +1,20 @@
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 
-use crate::{ColorSchemes, types::*};
+use crate::types::*;
 
-#[derive(FromRow, Serialize, Deserialize, Debug)]
+#[derive(FromRow, Serialize, Deserialize, Debug, Validate)]
 pub struct CreateData {
+    #[validate(length(min = 1, max = 32))]
     pub name: String,
     #[sqlx(json)]
-    pub schemes: ColorSchemes,
+    #[validate(length(min = 1, max = 32), nested)]
+    pub schemes: Vec<ColorScheme>,
+    #[validate(length(min = 1, max = 32))]
     pub description: Option<String>,
 }
 
-#[derive(FromRow, Serialize, Deserialize)]
+#[derive(FromRow, Serialize, Deserialize, Debug, Validate)]
 pub struct ReadData {
     #[sqlx(flatten)]
     #[serde(flatten)]
@@ -19,7 +22,7 @@ pub struct ReadData {
     pub owner: Ulid,
 }
 
-#[derive(FromRow, Serialize, Deserialize)]
+#[derive(FromRow, Serialize, Deserialize, Debug, Validate)]
 pub struct ListData {
     pub ulid: Ulid,
     #[sqlx(flatten)]

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use axum::extract::State;
+use axum_valid::Valid;
 use reqwest::StatusCode;
 use tracing::instrument;
 
@@ -11,7 +12,7 @@ pub async fn update(
     Session(user_ulid): Session,
     State(db): State<Arc<DB>>,
     UrlPath(theme_ulid): UrlPath<Ulid>,
-    AxumJson(update_data): AxumJson<UpdateData>,
+    Valid(AxumJson(update_data)): Valid<AxumJson<UpdateData>>,
 ) -> StatusCode {
     let Ok(res) = db.read_theme_owner(&theme_ulid).await else {
         return StatusCode::INTERNAL_SERVER_ERROR;
