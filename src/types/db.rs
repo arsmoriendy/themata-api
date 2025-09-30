@@ -31,7 +31,11 @@ impl DB {
             .bind(&create_data.name)
             .bind(SqlxJson(&create_data.schemes))
             .bind(owner)
-            .bind(&create_data.description)
+            .bind(match &create_data.description {
+                // if description is empty, make it None
+                Some(d) => if d.len() == 0 {None} else {Some(d)},
+                None=>None
+            })
             .fetch_one(&self.pool)
             .await
     }

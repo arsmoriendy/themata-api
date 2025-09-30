@@ -10,7 +10,7 @@ pub struct CreateData {
     #[sqlx(json)]
     #[validate(length(min = 1, max = 32), nested)]
     pub schemes: Vec<ColorScheme>,
-    #[validate(length(min = 1, max = 512))]
+    #[validate(length(max = 512))]
     pub description: Option<String>,
 }
 
