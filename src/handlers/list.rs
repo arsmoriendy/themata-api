@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
 use axum::extract::State;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::instrument;
 
-use crate::{DB, ListData, types::*};
+use crate::{ListData, types::*};
 
 #[derive(Deserialize, Debug)]
 pub struct Pagination {
@@ -15,7 +13,7 @@ pub struct Pagination {
 
 #[instrument]
 pub async fn list(
-    State(db): State<Arc<DB>>,
+    State(AppState { db }): State<AppState>,
     UrlQuery(pagination): UrlQuery<Pagination>,
 ) -> Result<AxumJson<Vec<ListData>>, StatusCode> {
     const MAX_PER_PAGE: i64 = 100;

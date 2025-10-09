@@ -2,9 +2,16 @@ mod data;
 mod db;
 mod reexports;
 
+use std::sync::Arc;
+
 pub use data::*;
 pub use db::*;
 pub use reexports::*;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub db: Arc<DB>,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct JWTSessionClaims {

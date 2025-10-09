@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/read_username/{user_ulid}", get(handlers::read_username))
         .route("/authenticate", get(handlers::authenticate))
         .layer(CorsLayer::permissive())
-        .with_state(Arc::new(db));
+        .with_state(AppState { db: Arc::new(db) });
 
     let listener = tokio::net::TcpListener::bind(&*env::LISTEN_ADDR).await?;
     axum::serve(listener, app).await?;
@@ -76,12 +76,12 @@ fn get_session_user(jwt: &str) -> Result<Ulid, JwtError> {
 /// Session JWT extractor + validator from authentication header
 struct Session(Ulid);
 
-impl FromRequestParts<Arc<DB>> for Session {
+impl FromRequestParts<AppState> for Session {
     type Rejection = StatusCode;
 
     async fn from_request_parts(
         parts: &mut request::Parts,
-        db: &Arc<DB>,
+        AppState { db }: &AppState,
     ) -> Result<Self, Self::Rejection> {
         // inherit bearer extractor
         let TypedHeader(Authorization(bearer)) =

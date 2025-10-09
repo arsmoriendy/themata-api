@@ -1,16 +1,14 @@
-use std::sync::Arc;
-
 use axum::extract::State;
 use axum_valid::Valid;
 use reqwest::StatusCode;
 use tracing::instrument;
 
-use crate::{DB, Session, UpdateData, types::*, ulid::Ulid};
+use crate::{Session, UpdateData, types::*, ulid::Ulid};
 
 #[instrument]
 pub async fn update(
     Session(user_ulid): Session,
-    State(db): State<Arc<DB>>,
+    State(AppState { db }): State<AppState>,
     UrlPath(theme_ulid): UrlPath<Ulid>,
     Valid(AxumJson(update_data)): Valid<AxumJson<UpdateData>>,
 ) -> StatusCode {

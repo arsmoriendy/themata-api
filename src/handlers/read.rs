@@ -1,14 +1,12 @@
-use std::sync::Arc;
-
 use axum::extract::State;
 use reqwest::StatusCode;
 use tracing::instrument;
 
-use crate::{DB, ReadData, types::*, ulid::Ulid};
+use crate::{ReadData, types::*, ulid::Ulid};
 
 #[instrument]
 pub async fn read(
-    State(db): State<Arc<DB>>,
+    State(AppState { db }): State<AppState>,
     UrlPath(ulid): UrlPath<Ulid>,
 ) -> Result<AxumJson<ReadData>, StatusCode> {
     let row = db

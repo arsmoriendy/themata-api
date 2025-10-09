@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     extract::State,
     response::{IntoResponse, Response},
@@ -8,7 +6,7 @@ use reqwest::{ClientBuilder, StatusCode, header::ACCEPT};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-use crate::{DB, JWTSessionClaims, env, types::*};
+use crate::{JWTSessionClaims, env, types::*};
 
 #[derive(Deserialize, Debug)]
 pub struct GithubQueryParams {
@@ -17,7 +15,7 @@ pub struct GithubQueryParams {
 
 #[instrument]
 pub async fn github_login(
-    State(db): State<Arc<DB>>,
+    State(AppState { db }): State<AppState>,
     UrlQuery(GithubQueryParams { code }): UrlQuery<GithubQueryParams>,
 ) -> Response {
     // TODO: handle errors better
