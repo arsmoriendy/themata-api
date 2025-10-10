@@ -46,6 +46,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/update_username", patch(handlers::update_username))
         .route("/read_username/{user_ulid}", get(handlers::read_username))
         .route("/authenticate", get(handlers::authenticate))
+        .route("/count", get(handlers::count))
         .layer(CorsLayer::permissive())
         .with_state(AppState { db: Arc::new(db) });
 

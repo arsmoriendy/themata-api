@@ -116,4 +116,10 @@ impl DB {
             .await
             .map(|row| row.is_some())
     }
+
+    pub async fn read_theme_count(&self) -> Result<i64, SqlxError> {
+        query_scalar("SELECT theme_count FROM theme_count")
+            .fetch_one(&self.pool)
+            .await
+    }
 }
