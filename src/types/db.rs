@@ -1,5 +1,5 @@
 use crate::types::*;
-use sqlx::{Pool, Postgres, query, query_as, query_scalar};
+use sqlx::{Pool, Postgres, QueryBuilder, query, query_as, query_scalar};
 
 #[derive(Debug)]
 pub struct DB {
@@ -40,14 +40,30 @@ impl DB {
             .await
     }
 
-    pub async fn list_themes(&self, page: i64, per_page: i64) -> Result<Vec<ListData>, SqlxError> {
-        query_as(
-            "SELECT ulid, name, schemes, owner, description FROM themes ORDER BY ulid LIMIT $1 OFFSET $2",
-        )
-        .bind(per_page)
-        .bind((page - 1) * per_page)
-        .fetch_all(&self.pool)
-        .await
+    pub async fn list_themes(
+        &self,
+        page: i64,
+        per_page: i64,
+        search: Option<&str>,
+    ) -> Result<Vec<ListData>, SqlxError> {
+        let mut q = QueryBuilder::<Postgres>::new(
+            "SELECT ulid, name, schemes, owner, description FROM themes",
+        );
+        if let Some(search) = search {
+            q.push(" WHERE LOWER(name) LIKE '%' || LOWER(")
+                .push_bind(search)
+                .push(") || '%'")
+                .push(" ORDER BY levenshtein(LOWER(name), LOWER(")
+                .push_bind(search)
+                .push("))");
+        } else {
+            q.push(" ORDER BY ulid");
+        }
+        q.push(" LIMIT ")
+            .push_bind(per_page)
+            .push(" OFFSET ")
+            .push_bind((page - 1) * per_page);
+        q.build_query_as().fetch_all(&self.pool).await
     }
 
     pub async fn update_theme(

@@ -6,28 +6,34 @@ use tracing::instrument;
 use crate::{ListData, types::*};
 
 #[derive(Deserialize, Debug)]
-pub struct Pagination {
+pub struct UrlParam {
     page: Option<i64>,
     per_page: Option<i64>,
+    search: Option<String>,
 }
 
 #[instrument]
 pub async fn list(
     State(AppState { db }): State<AppState>,
-    UrlQuery(pagination): UrlQuery<Pagination>,
+    UrlQuery(UrlParam {
+        page,
+        per_page,
+        search,
+    }): UrlQuery<UrlParam>,
 ) -> Result<AxumJson<Vec<ListData>>, StatusCode> {
     const MAX_PER_PAGE: i64 = 100;
     const DEFAULT_PER_PAGE: i64 = 10;
 
-    if let Some(per_page) = pagination.per_page
+    if let Some(per_page) = per_page
         && per_page > MAX_PER_PAGE
     {
         return Err(StatusCode::BAD_REQUEST);
     }
 
     db.list_themes(
-        pagination.page.unwrap_or(1),
-        pagination.per_page.unwrap_or(DEFAULT_PER_PAGE),
+        page.unwrap_or(1),
+        per_page.unwrap_or(DEFAULT_PER_PAGE),
+        search.as_ref().map(|s| s.as_ref()),
     )
     .await
     .map(AxumJson)
