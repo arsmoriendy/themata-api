@@ -7,7 +7,7 @@ use axum::{
     Router,
     extract::FromRequestParts,
     http::request,
-    routing::{delete, get, patch, post, put},
+    routing::{delete, get, post, put},
 };
 use axum_extra::{
     TypedHeader,
@@ -43,8 +43,6 @@ async fn main() -> anyhow::Result<()> {
         .route("/update/{ulid}", put(handlers::update))
         .route("/delete/{ulid}", delete(handlers::delete))
         .route("/login/github", get(handlers::github_login))
-        .route("/update_username", patch(handlers::update_username))
-        .route("/read_username/{user_ulid}", get(handlers::read_username))
         .route("/authenticate", get(handlers::authenticate))
         .route("/count", get(handlers::count))
         .layer(CorsLayer::permissive())

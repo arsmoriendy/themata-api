@@ -90,32 +90,11 @@ impl DB {
     }
 
     pub async fn create_user(&self, email: &str) -> Result<Ulid, SqlxError> {
-        query_scalar("INSERT INTO users (ulid, email, username) VALUES ($1, $2, $3) RETURNING ulid")
+        query_scalar("INSERT INTO users (ulid, email) VALUES ($1, $2) RETURNING ulid")
             .bind(Ulid(PrimitiveUlid::new()))
             .bind(email)
-            .bind(PrimitiveUlid::new().to_string())
             .fetch_one(&self.pool)
             .await
-    }
-
-    pub async fn read_username(&self, user_ulid: &Ulid) -> Result<Option<String>, SqlxError> {
-        query_scalar("SELECT username FROM users WHERE ulid = $1")
-            .bind(user_ulid)
-            .fetch_optional(&self.pool)
-            .await
-    }
-
-    pub async fn update_username(
-        &self,
-        user_ulid: &Ulid,
-        new_username: &str,
-    ) -> Result<(), SqlxError> {
-        query("UPDATE users SET username = $2 WHERE ulid = $1")
-            .bind(user_ulid)
-            .bind(new_username)
-            .execute(&self.pool)
-            .await
-            .map(|_| ())
     }
 
     pub async fn read_user(&self, email: &str) -> Result<Option<Ulid>, SqlxError> {

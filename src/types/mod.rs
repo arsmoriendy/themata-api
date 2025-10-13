@@ -16,7 +16,7 @@ pub struct AppState {
 #[derive(Serialize, Deserialize)]
 pub struct JWTSessionClaims {
     pub sub: Ulid,
-    pub preferred_username: String,
+    pub email: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Validate)]

@@ -18,7 +18,5 @@ export!(
     create,
     update,
     authenticate,
-    update_username,
-    read_username,
     count,
 );
