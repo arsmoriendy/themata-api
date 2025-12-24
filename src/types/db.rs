@@ -6,6 +6,11 @@ pub struct DB {
     pub pool: Pool<Postgres>,
 }
 
+pub enum ListFilter<'a> {
+    SEARCH(&'a str),
+    OWNER(Ulid),
+}
+
 impl DB {
     pub async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ReadData>, SqlxError> {
         query_as("SELECT name, schemes, owner, description FROM themes WHERE ulid = $1")
@@ -40,25 +45,32 @@ impl DB {
             .await
     }
 
-    pub async fn list_themes(
+    pub async fn list_themes<'a>(
         &self,
         page: i64,
         per_page: i64,
-        search: Option<&str>,
+        filters: &[ListFilter<'a>],
     ) -> Result<Vec<ListData>, SqlxError> {
         let mut q = QueryBuilder::<Postgres>::new(
             "SELECT ulid, name, schemes, owner, description FROM themes",
         );
-        if let Some(search) = search {
-            q.push(" WHERE LOWER(name) LIKE '%' || LOWER(")
-                .push_bind(search)
-                .push(") || '%'")
-                .push(" ORDER BY levenshtein(LOWER(name), LOWER(")
-                .push_bind(search)
-                .push("))");
-        } else {
-            q.push(" ORDER BY ulid");
+
+        if !filters.is_empty() {
+            q.push(" WHERE ");
+            for (i, f) in filters.iter().enumerate() {
+                match f {
+                    ListFilter::SEARCH(s) => q
+                        .push("LOWER(name) LIKE '%' || LOWER(")
+                        .push_bind(s)
+                        .push(") || '%'"),
+                    ListFilter::OWNER(o) => q.push("owner = ").push_bind(o),
+                };
+                if i != filters.len() - 1 {
+                    q.push(" AND ");
+                };
+            }
         }
+
         q.push(" LIMIT ")
             .push_bind(per_page)
             .push(" OFFSET ")

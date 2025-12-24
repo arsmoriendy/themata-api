@@ -1,41 +1,61 @@
-use axum::extract::State;
+use std::collections::HashMap;
+
+use axum::extract::{FromRequestParts, State};
 use reqwest::StatusCode;
-use serde::Deserialize;
 use tracing::instrument;
 
 use crate::{ListData, types::*};
 
-#[derive(Deserialize, Debug)]
-pub struct UrlParam {
-    page: Option<i64>,
-    per_page: Option<i64>,
-    search: Option<String>,
-}
-
 #[instrument]
 pub async fn list(
     State(AppState { db }): State<AppState>,
-    UrlQuery(UrlParam {
-        page,
-        per_page,
-        search,
-    }): UrlQuery<UrlParam>,
+    QueryMap(qm): QueryMap,
 ) -> Result<AxumJson<Vec<ListData>>, StatusCode> {
     const MAX_PER_PAGE: i64 = 100;
     const DEFAULT_PER_PAGE: i64 = 10;
 
-    if let Some(per_page) = per_page
-        && per_page > MAX_PER_PAGE
-    {
-        return Err(StatusCode::BAD_REQUEST);
+    let mut page = 1;
+    let mut per_page = DEFAULT_PER_PAGE;
+    let mut filters: Vec<ListFilter> = vec![];
+
+    for (k, v) in &qm {
+        match k.as_str() {
+            "page" => page = v.parse::<i64>().map_err(|_| StatusCode::BAD_REQUEST)?,
+            "per_page" => {
+                per_page = v.parse::<i64>().map_err(|_| StatusCode::BAD_REQUEST)?;
+                if per_page > MAX_PER_PAGE {
+                    return Err(StatusCode::BAD_REQUEST);
+                }
+            }
+            "search" => filters.push(ListFilter::SEARCH(v.as_str())),
+            "owner" => filters.push(ListFilter::OWNER(Ulid(
+                PrimitiveUlid::try_from(v.as_str()).map_err(|_| StatusCode::BAD_REQUEST)?,
+            ))),
+            _ => {}
+        };
     }
 
-    db.list_themes(
-        page.unwrap_or(1),
-        per_page.unwrap_or(DEFAULT_PER_PAGE),
-        search.as_ref().map(|s| s.as_ref()),
-    )
-    .await
-    .map(AxumJson)
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    db.list_themes(page, per_page, &filters)
+        .await
+        .map(AxumJson)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+pub struct QueryMap(HashMap<String, String>);
+
+impl<S: Sync> FromRequestParts<S> for QueryMap {
+    type Rejection = StatusCode;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let Some(query) = parts.uri.query() else {
+            return Ok(QueryMap(HashMap::new()));
+        };
+
+        serde_urlencoded::from_str(query)
+            .map(|qm| QueryMap(qm))
+            .map_err(|_| StatusCode::BAD_REQUEST)
+    }
 }
