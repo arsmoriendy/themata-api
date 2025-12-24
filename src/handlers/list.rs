@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use axum::extract::{FromRequestParts, State};
+use axum::extract::State;
 use reqwest::StatusCode;
 use tracing::instrument;
 
@@ -39,23 +37,4 @@ pub async fn list(
         .await
         .map(AxumJson)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-}
-
-pub struct QueryMap(HashMap<String, String>);
-
-impl<S: Sync> FromRequestParts<S> for QueryMap {
-    type Rejection = StatusCode;
-
-    async fn from_request_parts(
-        parts: &mut axum::http::request::Parts,
-        _: &S,
-    ) -> Result<Self, Self::Rejection> {
-        let Some(query) = parts.uri.query() else {
-            return Ok(QueryMap(HashMap::new()));
-        };
-
-        serde_urlencoded::from_str(query)
-            .map(|qm| QueryMap(qm))
-            .map_err(|_| StatusCode::BAD_REQUEST)
-    }
 }
