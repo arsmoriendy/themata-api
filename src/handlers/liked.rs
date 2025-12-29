@@ -6,7 +6,7 @@ use crate::types::*;
 
 #[instrument]
 pub async fn liked(
-    Session(user): Session,
+    ValidSession(user): ValidSession,
     State(AppState { db }): State<AppState>,
     UrlPath(theme): UrlPath<Ulid>,
 ) -> Result<AxumJson<bool>, StatusCode> {

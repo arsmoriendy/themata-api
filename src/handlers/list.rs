@@ -8,6 +8,7 @@ use crate::{ListData, types::*};
 pub async fn list(
     State(AppState { db }): State<AppState>,
     QueryMap(qm): QueryMap,
+    Session(mut s): Session,
 ) -> Result<AxumJson<Vec<ListData>>, StatusCode> {
     const MAX_PER_PAGE: i64 = 100;
     const DEFAULT_PER_PAGE: i64 = 10;
@@ -25,10 +26,18 @@ pub async fn list(
                     return Err(StatusCode::BAD_REQUEST);
                 }
             }
-            "search" => filters.push(ListFilter::SEARCH(v.as_str())),
-            "owner" => filters.push(ListFilter::OWNER(Ulid(
+            "search" => filters.push(ListFilter::Search(v.as_str())),
+            "owner" => filters.push(ListFilter::Owner(Ulid(
                 PrimitiveUlid::try_from(v.as_str()).map_err(|_| StatusCode::BAD_REQUEST)?,
             ))),
+            "liked" => {
+                if v == "true" {
+                    match s.take() {
+                        Some(s) => filters.push(ListFilter::LikedBy(s)),
+                        None => return Err(StatusCode::UNAUTHORIZED),
+                    }
+                }
+            }
             _ => {}
         };
     }
@@ -36,5 +45,8 @@ pub async fn list(
     db.list_themes(page, per_page, &filters)
         .await
         .map(AxumJson)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        .map_err(|e| {
+            tracing::error!("{e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })
 }

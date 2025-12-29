@@ -2,11 +2,11 @@ use axum::extract::State;
 use reqwest::StatusCode;
 use tracing::instrument;
 
-use crate::{Session, types::*, ulid::Ulid};
+use crate::{types::*, ulid::Ulid};
 
 #[instrument]
 pub async fn delete(
-    Session(user_ulid): Session,
+    ValidSession(user_ulid): ValidSession,
     State(AppState { db }): State<AppState>,
     UrlPath(theme_ulid): UrlPath<Ulid>,
 ) -> StatusCode {

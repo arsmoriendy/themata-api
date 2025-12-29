@@ -3,11 +3,11 @@ use axum_valid::Valid;
 use reqwest::StatusCode;
 use tracing::instrument;
 
-use crate::{Session, UpdateData, types::*, ulid::Ulid};
+use crate::{UpdateData, types::*, ulid::Ulid};
 
 #[instrument]
 pub async fn update(
-    Session(user_ulid): Session,
+    ValidSession(user_ulid): ValidSession,
     State(AppState { db }): State<AppState>,
     UrlPath(theme_ulid): UrlPath<Ulid>,
     Valid(AxumJson(update_data)): Valid<AxumJson<UpdateData>>,

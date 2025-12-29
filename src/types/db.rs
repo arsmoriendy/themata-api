@@ -7,8 +7,9 @@ pub struct DB {
 }
 
 pub enum ListFilter<'a> {
-    SEARCH(&'a str),
-    OWNER(Ulid),
+    Search(&'a str),
+    Owner(Ulid),
+    LikedBy(Ulid),
 }
 
 impl DB {
@@ -52,18 +53,19 @@ impl DB {
         filters: &[ListFilter<'a>],
     ) -> Result<Vec<ListData>, SqlxError> {
         let mut q = QueryBuilder::<Postgres>::new(
-            "SELECT ulid, name, schemes, owner, description FROM themes",
+            "SELECT ulid, name, schemes, owner, description FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid",
         );
 
         if !filters.is_empty() {
             q.push(" WHERE ");
             for (i, f) in filters.iter().enumerate() {
                 match f {
-                    ListFilter::SEARCH(s) => q
+                    ListFilter::Search(s) => q
                         .push("LOWER(name) LIKE '%' || LOWER(")
                         .push_bind(s)
                         .push(") || '%'"),
-                    ListFilter::OWNER(o) => q.push("owner = ").push_bind(o),
+                    ListFilter::Owner(o) => q.push("owner = ").push_bind(o),
+                    ListFilter::LikedBy(u) => q.push("likes.user_ulid = ").push_bind(u),
                 };
                 if i != filters.len() - 1 {
                     q.push(" AND ");
@@ -162,4 +164,37 @@ impl DB {
                 .unwrap_or(false);
         Ok(liked)
     }
+
+    // pub async fn list_user_likes<'a>(
+    //     &self,
+    //     page: i64,
+    //     per_page: i64,
+    //     filters: &[ListFilter<'a>],
+    // ) -> Result<Vec<ListData>, SqlxError> {
+    //     let mut q = QueryBuilder::<Postgres>::new(
+    //         "SELECT ulid, name, schemes, owner, description FROM themes JOIN likes ON themes.ulid = likes.theme_ulid WHERE user = $1",
+    //     );
+    //
+    //     if !filters.is_empty() {
+    //         q.push(" AND ");
+    //         for (i, f) in filters.iter().enumerate() {
+    //             match f {
+    //                 ListFilter::Search(s) => q
+    //                     .push("LOWER(name) LIKE '%' || LOWER(")
+    //                     .push_bind(s)
+    //                     .push(") || '%'"),
+    //                 ListFilter::Owner(o) => q.push("owner = ").push_bind(o),
+    //             };
+    //             if i != filters.len() - 1 {
+    //                 q.push(" AND ");
+    //             };
+    //         }
+    //     }
+    //
+    //     q.push(" LIMIT ")
+    //         .push_bind(per_page)
+    //         .push(" OFFSET ")
+    //         .push_bind((page - 1) * per_page);
+    //     q.build_query_as().fetch_all(&self.pool).await
+    // }
 }

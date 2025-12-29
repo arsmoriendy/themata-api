@@ -3,11 +3,11 @@ use axum_valid::Valid;
 use reqwest::StatusCode;
 use tracing::instrument;
 
-use crate::{CreateData, Session, types::*};
+use crate::{CreateData, types::*};
 
 #[instrument]
 pub async fn create(
-    Session(user_ulid): Session,
+    ValidSession(user_ulid): ValidSession,
     State(AppState { db }): State<AppState>,
     Valid(AxumJson(create_data)): Valid<AxumJson<CreateData>>,
 ) -> Result<String, StatusCode> {

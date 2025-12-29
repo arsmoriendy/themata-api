@@ -7,7 +7,7 @@ use crate::types::*;
 #[instrument]
 pub async fn like(
     State(AppState { db }): State<AppState>,
-    Session(user): Session,
+    ValidSession(user): ValidSession,
     UrlPath(theme): UrlPath<Ulid>,
 ) -> Result<(), StatusCode> {
     let ReadData { owner, flatten: _ } = db

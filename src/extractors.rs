@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use axum_extra::typed_header::TypedHeaderRejectionReason;
+
 use crate::{
     get_session_user,
     types::{AppState, external_exports::*},
@@ -7,7 +9,8 @@ use crate::{
 };
 
 /// Session JWT extractor + validator from authentication header
-pub struct Session(pub Ulid);
+#[derive(Debug)]
+pub struct Session(pub Option<Ulid>);
 
 impl FromRequestParts<AppState> for Session {
     type Rejection = StatusCode;
@@ -18,9 +21,15 @@ impl FromRequestParts<AppState> for Session {
     ) -> Result<Self, Self::Rejection> {
         // inherit bearer extractor
         let TypedHeader(Authorization(bearer)) =
-            TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, &())
-                .await
-                .map_err(|_| StatusCode::BAD_REQUEST)?;
+            match TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, &()).await {
+                Ok(b) => b,
+                Err(e) => {
+                    return match e.reason() {
+                        TypedHeaderRejectionReason::Missing => Ok(Session(None)),
+                        _ => Err(StatusCode::BAD_REQUEST),
+                    };
+                }
+            };
 
         let session = bearer.token();
 
@@ -38,7 +47,27 @@ impl FromRequestParts<AppState> for Session {
             return Err(StatusCode::FORBIDDEN);
         }
 
-        Ok(Session(user_ulid))
+        Ok(Session(Some(user_ulid)))
+    }
+}
+
+#[derive(Debug)]
+pub struct ValidSession(pub Ulid);
+
+impl FromRequestParts<AppState> for ValidSession {
+    type Rejection = StatusCode;
+
+    async fn from_request_parts(
+        parts: &mut RequestParts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        match Session::from_request_parts(parts, state).await {
+            Ok(Session(s)) => match s {
+                Some(s) => Ok(ValidSession(s)),
+                None => Err(StatusCode::UNAUTHORIZED),
+            },
+            Err(e) => Err(e),
+        }
     }
 }
 
