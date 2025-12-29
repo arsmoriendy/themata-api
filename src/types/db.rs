@@ -94,7 +94,7 @@ impl DB {
     }
 
     pub async fn delete_theme(&self, ulid: &Ulid) -> Result<(), SqlxError> {
-        let _ = query("DELETE FROM themes WHERE ulid = $1")
+        query("DELETE FROM themes WHERE ulid = $1")
             .bind(ulid)
             .execute(&self.pool)
             .await?;
@@ -128,5 +128,38 @@ impl DB {
         query_scalar("SELECT theme_count FROM theme_count")
             .fetch_one(&self.pool)
             .await
+    }
+
+    pub async fn like(&self, theme: &Ulid, user: &Ulid) -> Result<(), SqlxError> {
+        query("INSERT INTO likes (user_ulid, theme_ulid) VALUES ($1, $2)")
+            .bind(user)
+            .bind(theme)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn unlike(&self, theme: &Ulid, user: &Ulid) -> Result<(), SqlxError> {
+        query("DELETE FROM likes WHERE user_ulid = $1 AND theme_ulid = $2")
+            .bind(user)
+            .bind(theme)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn liked(&self, theme: &Ulid, user: &Ulid) -> Result<bool, SqlxError> {
+        let liked: bool =
+            query_scalar("SELECT true FROM likes WHERE user_ulid = $1 AND theme_ulid = $2")
+                .bind(user)
+                .bind(theme)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| {
+                    tracing::error!("{e}");
+                    e
+                })?
+                .unwrap_or(false);
+        Ok(liked)
     }
 }

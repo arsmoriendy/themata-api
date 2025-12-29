@@ -19,4 +19,7 @@ export!(
     update,
     authenticate,
     count,
+    like,
+    unlike,
+    liked,
 );
