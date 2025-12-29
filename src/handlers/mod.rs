@@ -21,6 +21,5 @@ export!(
     count,
     like,
     unlike,
-    list_user_likes,
     liked,
 );
