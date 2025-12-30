@@ -14,7 +14,7 @@ pub enum ListFilter<'a> {
 
 impl DB {
     pub async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ReadData>, SqlxError> {
-        query_as("SELECT name, schemes, owner, description FROM themes WHERE ulid = $1")
+        query_as("SELECT name, schemes, owner, description, count(likes) AS like_count FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid GROUP BY themes.ulid HAVING ulid = $1")
             .bind(ulid)
             .fetch_optional(&self.pool)
             .await
@@ -53,11 +53,11 @@ impl DB {
         filters: &[ListFilter<'a>],
     ) -> Result<Vec<ListData>, SqlxError> {
         let mut q = QueryBuilder::<Postgres>::new(
-            "SELECT ulid, name, schemes, owner, description FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid",
+            "SELECT ulid, name, schemes, owner, description, count(likes) AS like_count FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid GROUP BY themes.ulid",
         );
 
         if !filters.is_empty() {
-            q.push(" WHERE ");
+            q.push(" HAVING ");
             for (i, f) in filters.iter().enumerate() {
                 match f {
                     ListFilter::Search(s) => q
@@ -164,37 +164,4 @@ impl DB {
                 .unwrap_or(false);
         Ok(liked)
     }
-
-    // pub async fn list_user_likes<'a>(
-    //     &self,
-    //     page: i64,
-    //     per_page: i64,
-    //     filters: &[ListFilter<'a>],
-    // ) -> Result<Vec<ListData>, SqlxError> {
-    //     let mut q = QueryBuilder::<Postgres>::new(
-    //         "SELECT ulid, name, schemes, owner, description FROM themes JOIN likes ON themes.ulid = likes.theme_ulid WHERE user = $1",
-    //     );
-    //
-    //     if !filters.is_empty() {
-    //         q.push(" AND ");
-    //         for (i, f) in filters.iter().enumerate() {
-    //             match f {
-    //                 ListFilter::Search(s) => q
-    //                     .push("LOWER(name) LIKE '%' || LOWER(")
-    //                     .push_bind(s)
-    //                     .push(") || '%'"),
-    //                 ListFilter::Owner(o) => q.push("owner = ").push_bind(o),
-    //             };
-    //             if i != filters.len() - 1 {
-    //                 q.push(" AND ");
-    //             };
-    //         }
-    //     }
-    //
-    //     q.push(" LIMIT ")
-    //         .push_bind(per_page)
-    //         .push(" OFFSET ")
-    //         .push_bind((page - 1) * per_page);
-    //     q.build_query_as().fetch_all(&self.pool).await
-    // }
 }

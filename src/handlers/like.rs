@@ -10,7 +10,7 @@ pub async fn like(
     ValidSession(user): ValidSession,
     UrlPath(theme): UrlPath<Ulid>,
 ) -> Result<(), StatusCode> {
-    let ReadData { owner, flatten: _ } = db
+    let ReadData { owner, .. } = db
         .read_theme(&theme)
         .await
         .map_err(|_| StatusCode::BAD_REQUEST)?
