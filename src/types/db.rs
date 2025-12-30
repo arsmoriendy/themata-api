@@ -53,11 +53,11 @@ impl DB {
         filters: &[ListFilter<'a>],
     ) -> Result<Vec<ListData>, SqlxError> {
         let mut q = QueryBuilder::<Postgres>::new(
-            "SELECT ulid, name, schemes, owner, description, count(likes) AS like_count FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid GROUP BY themes.ulid",
+            "SELECT ulid, name, schemes, owner, description, count(likes) AS like_count FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid",
         );
 
         if !filters.is_empty() {
-            q.push(" HAVING ");
+            q.push(" WHERE ");
             for (i, f) in filters.iter().enumerate() {
                 match f {
                     ListFilter::Search(s) => q
@@ -73,7 +73,7 @@ impl DB {
             }
         }
 
-        q.push(" LIMIT ")
+        q.push(" GROUP BY themes.ulid LIMIT ")
             .push_bind(per_page)
             .push(" OFFSET ")
             .push_bind((page - 1) * per_page);
