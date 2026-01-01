@@ -18,5 +18,9 @@ pub async fn read(
         return Err(StatusCode::NOT_FOUND);
     };
 
+    db.increment_views(&ulid)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
     Ok(AxumJson(read_data))
 }

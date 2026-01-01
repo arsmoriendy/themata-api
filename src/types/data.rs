@@ -21,6 +21,7 @@ pub struct ReadData {
     pub flatten: CreateData,
     pub owner: Ulid,
     pub like_count: i64,
+    pub views: i64,
 }
 
 #[derive(FromRow, Serialize, Deserialize, Debug, Validate)]
