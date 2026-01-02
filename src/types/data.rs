@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use sqlx::{prelude::*, types::chrono::*};
 
 use crate::types::*;
 
@@ -22,6 +22,7 @@ pub struct ReadData {
     pub owner: Ulid,
     pub like_count: i64,
     pub views: i64,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(FromRow, Serialize, Deserialize, Debug, Validate)]
