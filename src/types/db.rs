@@ -12,6 +12,29 @@ pub enum ListFilter<'a> {
     LikedBy(Ulid),
 }
 
+pub enum SortList {
+    Views,
+    Likes,
+    Created,
+}
+
+impl Default for SortList {
+    fn default() -> Self {
+        Self::Created
+    }
+}
+
+pub enum SortOrder {
+    Ascending,
+    Descending,
+}
+
+impl Default for SortOrder {
+    fn default() -> Self {
+        Self::Descending
+    }
+}
+
 impl DB {
     pub async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ReadData>, SqlxError> {
         query_as("SELECT name, schemes, owner, description, count(likes) AS like_count, views, created_at FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid GROUP BY themes.ulid HAVING ulid = $1")
@@ -51,6 +74,8 @@ impl DB {
         page: i64,
         per_page: i64,
         filters: &[ListFilter<'a>],
+        sort_by: SortList,
+        sort_order: SortOrder,
     ) -> Result<Vec<ListData>, SqlxError> {
         let mut q = QueryBuilder::<Postgres>::new(
             "SELECT ulid, name, schemes, owner, description, count(likes) AS like_count, views, created_at FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid",
@@ -73,7 +98,19 @@ impl DB {
             }
         }
 
-        q.push(" GROUP BY themes.ulid LIMIT ")
+        q.push(" GROUP BY themes.ulid ORDER BY ")
+            .push_bind(match sort_by {
+                SortList::Views => "views",
+                SortList::Created => "created_at",
+                SortList::Likes => "like_count",
+            })
+            .push(" ")
+            .push(match sort_order {
+                SortOrder::Ascending => "ASC",
+                SortOrder::Descending => "DESC",
+            });
+
+        q.push(" LIMIT ")
             .push_bind(per_page)
             .push(" OFFSET ")
             .push_bind((page - 1) * per_page);
