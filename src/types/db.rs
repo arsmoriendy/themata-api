@@ -6,12 +6,14 @@ pub struct DB {
     pub pool: Pool<Postgres>,
 }
 
+#[derive(Debug)]
 pub enum ListFilter<'a> {
     Search(&'a str),
     Owner(Ulid),
     LikedBy(Ulid),
 }
 
+#[derive(Debug)]
 pub enum SortList {
     Views,
     Likes,
@@ -24,6 +26,7 @@ impl Default for SortList {
     }
 }
 
+#[derive(Debug)]
 pub enum SortOrder {
     Ascending,
     Descending,
@@ -99,7 +102,7 @@ impl DB {
         }
 
         q.push(" GROUP BY themes.ulid ORDER BY ")
-            .push_bind(match sort_by {
+            .push(match sort_by {
                 SortList::Views => "views",
                 SortList::Created => "created_at",
                 SortList::Likes => "like_count",
