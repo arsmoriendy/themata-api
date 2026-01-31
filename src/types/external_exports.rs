@@ -11,4 +11,5 @@ pub use jsonwebtoken::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 pub use reqwest::StatusCode;
 pub use serde::{Deserialize, Serialize};
 pub use sqlx::{Error as SqlxError, types::Json as SqlxJson};
+pub use std::time::Duration;
 pub use validator::Validate;

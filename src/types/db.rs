@@ -205,9 +205,10 @@ impl DB {
         Ok(liked)
     }
 
-    pub async fn increment_views(&self, theme: &Ulid) -> Result<(), SqlxError> {
-        query("UPDATE themes SET views = views + 1 WHERE ulid = $1")
+    pub async fn increment_views_by(&self, theme: &Ulid, inc: i64) -> Result<(), SqlxError> {
+        query("UPDATE themes SET views = views + $2 WHERE ulid = $1")
             .bind(theme)
+            .bind(inc)
             .execute(&self.pool)
             .await?;
         Ok(())

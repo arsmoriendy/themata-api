@@ -14,6 +14,7 @@ macro_rules! ENV {
 ENV![
     LISTEN_ADDR,
     DB_URL,
+    REDIS_URL,
     GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET,
     GITHUB_APP_NAME,
@@ -21,9 +22,11 @@ ENV![
 ];
 
 pub fn ensure_envs() {
+    // INFO: add the env vars above here manually
     for v in [
         &LISTEN_ADDR,
         &DB_URL,
+        &REDIS_URL,
         &GITHUB_CLIENT_ID,
         &GITHUB_CLIENT_SECRET,
         &GITHUB_APP_NAME,

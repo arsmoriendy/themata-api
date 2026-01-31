@@ -29,6 +29,12 @@ sqlx = { version = "0.8.6", features = [
 ] }
 chrono = { version = "0.4.41", features = ["serde"] }
 tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
+redis = { version = "1.0.3", features = [
+  "tls-rustls",
+  "aio",
+  "tokio-comp",
+  "tokio-rustls-comp",
+] }
 tower-http = { version = "0.6.6", features = ["cors"] }
 validator = { version = "0.20", features = ["derive"] }
 tracing = "0.1.41"
