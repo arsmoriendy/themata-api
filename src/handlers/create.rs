@@ -5,7 +5,7 @@ use tracing::instrument;
 
 use crate::{CreateData, types::*};
 
-#[instrument]
+#[instrument(skip(db))]
 pub async fn create(
     ValidSession(user_ulid): ValidSession,
     State(AppState { db }): State<AppState>,

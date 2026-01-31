@@ -4,7 +4,7 @@ use tracing::instrument;
 
 use crate::{ReadData, types::*, ulid::Ulid};
 
-#[instrument]
+#[instrument(skip(db))]
 pub async fn read(
     State(AppState { db }): State<AppState>,
     UrlPath(ulid): UrlPath<Ulid>,

@@ -4,7 +4,7 @@ use tracing::instrument;
 
 use crate::types::*;
 
-#[instrument]
+#[instrument(skip(db))]
 pub async fn liked(
     ValidSession(user): ValidSession,
     State(AppState { db }): State<AppState>,

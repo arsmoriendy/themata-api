@@ -5,7 +5,7 @@ use tracing::instrument;
 
 use crate::{UpdateData, types::*, ulid::Ulid};
 
-#[instrument]
+#[instrument(skip(db))]
 pub async fn update(
     ValidSession(user_ulid): ValidSession,
     State(AppState { db }): State<AppState>,

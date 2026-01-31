@@ -13,7 +13,7 @@ pub struct GithubQueryParams {
     code: String,
 }
 
-#[instrument]
+#[instrument(skip(db))]
 pub async fn github_login(
     State(AppState { db }): State<AppState>,
     UrlQuery(GithubQueryParams { code }): UrlQuery<GithubQueryParams>,

@@ -4,7 +4,7 @@ use tracing::instrument;
 
 use crate::{ListData, types::*};
 
-#[instrument]
+#[instrument(skip(db))]
 pub async fn list(
     State(AppState { db }): State<AppState>,
     QueryMap(qm): QueryMap,

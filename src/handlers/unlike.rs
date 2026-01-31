@@ -4,7 +4,7 @@ use tracing::instrument;
 
 use crate::types::*;
 
-#[instrument]
+#[instrument(skip(db))]
 pub async fn unlike(
     State(AppState { db }): State<AppState>,
     ValidSession(user): ValidSession,

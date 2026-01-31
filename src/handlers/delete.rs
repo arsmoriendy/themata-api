@@ -4,7 +4,7 @@ use tracing::instrument;
 
 use crate::{types::*, ulid::Ulid};
 
-#[instrument]
+#[instrument(skip(db))]
 pub async fn delete(
     ValidSession(user_ulid): ValidSession,
     State(AppState { db }): State<AppState>,
