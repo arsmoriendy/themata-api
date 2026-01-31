@@ -58,7 +58,8 @@ impl DB {
         create_data: &CreateData,
         owner: &Ulid,
     ) -> Result<Ulid, SqlxError> {
-        query_scalar("INSERT INTO themes (ulid, name, schemes, owner, description) VALUES ($1, $2, $3, $4, $5) RETURNING ulid")
+        let mut tx = self.pool.begin().await?;
+        let ulid = query_scalar("INSERT INTO themes (ulid, name, schemes, owner, description) VALUES ($1, $2, $3, $4, $5) RETURNING ulid")
             .bind(Ulid(PrimitiveUlid::new()))
             .bind(&create_data.name)
             .bind(SqlxJson(&create_data.schemes))
@@ -68,8 +69,17 @@ impl DB {
                 Some(d) => if d.len() == 0 {None} else {Some(d)},
                 None=>None
             })
-            .fetch_one(&self.pool)
-            .await
+            .fetch_one(&mut *tx)
+            .await?;
+        query("UPDATE users SET theme_count = theme_count + 1 WHERE ulid = $1")
+            .bind(owner)
+            .execute(&mut *tx)
+            .await?;
+        query("UPDATE theme_count SET theme_count = theme_count + 1")
+            .execute(&mut *tx)
+            .await?;
+        tx.commit().await?;
+        return Ok(ulid);
     }
 
     pub async fn list_themes<'a>(
