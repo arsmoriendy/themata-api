@@ -40,10 +40,14 @@ impl Default for SortOrder {
 
 impl DB {
     pub async fn read_theme(&self, ulid: &Ulid) -> Result<Option<ReadData>, SqlxError> {
-        query_as("SELECT name, schemes, owner, description, count(likes) AS like_count, views, created_at FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid GROUP BY themes.ulid HAVING ulid = $1")
-            .bind(ulid)
-            .fetch_optional(&self.pool)
-            .await
+        query_as(
+            "SELECT name, schemes, owner, description, count(likes) AS like_count, views, \
+             created_at FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid GROUP BY \
+             themes.ulid HAVING ulid = $1",
+        )
+        .bind(ulid)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     pub async fn read_theme_owner(&self, theme_ulid: &Ulid) -> Result<Option<Ulid>, SqlxError> {
@@ -59,18 +63,27 @@ impl DB {
         owner: &Ulid,
     ) -> Result<Ulid, SqlxError> {
         let mut tx = self.pool.begin().await?;
-        let ulid = query_scalar("INSERT INTO themes (ulid, name, schemes, owner, description) VALUES ($1, $2, $3, $4, $5) RETURNING ulid")
-            .bind(Ulid(PrimitiveUlid::new()))
-            .bind(&create_data.name)
-            .bind(SqlxJson(&create_data.schemes))
-            .bind(owner)
-            .bind(match &create_data.description {
-                // if description is empty, make it None
-                Some(d) => if d.len() == 0 {None} else {Some(d)},
-                None=>None
-            })
-            .fetch_one(&mut *tx)
-            .await?;
+        let ulid = query_scalar(
+            "INSERT INTO themes (ulid, name, schemes, owner, description) VALUES ($1, $2, $3, $4, \
+             $5) RETURNING ulid",
+        )
+        .bind(Ulid(PrimitiveUlid::new()))
+        .bind(&create_data.name)
+        .bind(SqlxJson(&create_data.schemes))
+        .bind(owner)
+        .bind(match &create_data.description {
+            // if description is empty, make it None
+            Some(d) => {
+                if d.len() == 0 {
+                    None
+                } else {
+                    Some(d)
+                }
+            }
+            None => None,
+        })
+        .fetch_one(&mut *tx)
+        .await?;
         query("UPDATE users SET theme_count = theme_count + 1 WHERE ulid = $1")
             .bind(owner)
             .execute(&mut *tx)
@@ -91,7 +104,8 @@ impl DB {
         sort_order: SortOrder,
     ) -> Result<Vec<ListData>, SqlxError> {
         let mut q = QueryBuilder::<Postgres>::new(
-            "SELECT ulid, name, schemes, owner, description, count(likes) AS like_count, views, created_at FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid",
+            "SELECT ulid, name, schemes, owner, description, count(likes) AS like_count, views, \
+             created_at FROM themes LEFT JOIN likes ON themes.ulid = likes.theme_ulid",
         );
 
         if !filters.is_empty() {
@@ -146,10 +160,24 @@ impl DB {
     }
 
     pub async fn delete_theme(&self, ulid: &Ulid) -> Result<(), SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        query(
+            "UPDATE users SET theme_count = theme_count - 1 WHERE ulid = (SELECT owner FROM \
+             themes WHERE ulid = $1)",
+        )
+        .bind(ulid)
+        .execute(&mut *tx)
+        .await?;
+        query("UPDATE theme_count SET theme_count = theme_count - 1")
+            .execute(&mut *tx)
+            .await?;
         query("DELETE FROM themes WHERE ulid = $1")
             .bind(ulid)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
+        tx.commit().await?;
+
         Ok(())
     }
 
