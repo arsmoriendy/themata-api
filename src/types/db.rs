@@ -62,7 +62,6 @@ impl DB {
         create_data: &CreateData,
         owner: &Ulid,
     ) -> Result<Ulid, SqlxError> {
-        let mut tx = self.pool.begin().await?;
         let ulid = query_scalar(
             "INSERT INTO themes (ulid, name, schemes, owner, description) VALUES ($1, $2, $3, $4, \
              $5) RETURNING ulid",
@@ -82,16 +81,8 @@ impl DB {
             }
             None => None,
         })
-        .fetch_one(&mut *tx)
+        .fetch_one(&self.pool)
         .await?;
-        query("UPDATE users SET theme_count = theme_count + 1 WHERE ulid = $1")
-            .bind(owner)
-            .execute(&mut *tx)
-            .await?;
-        query("UPDATE theme_count SET theme_count = theme_count + 1")
-            .execute(&mut *tx)
-            .await?;
-        tx.commit().await?;
         return Ok(ulid);
     }
 
@@ -160,24 +151,10 @@ impl DB {
     }
 
     pub async fn delete_theme(&self, ulid: &Ulid) -> Result<(), SqlxError> {
-        let mut tx = self.pool.begin().await?;
-
-        query(
-            "UPDATE users SET theme_count = theme_count - 1 WHERE ulid = (SELECT owner FROM \
-             themes WHERE ulid = $1)",
-        )
-        .bind(ulid)
-        .execute(&mut *tx)
-        .await?;
-        query("UPDATE theme_count SET theme_count = theme_count - 1")
-            .execute(&mut *tx)
-            .await?;
         query("DELETE FROM themes WHERE ulid = $1")
             .bind(ulid)
-            .execute(&mut *tx)
+            .execute(&self.pool)
             .await?;
-        tx.commit().await?;
-
         Ok(())
     }
 
