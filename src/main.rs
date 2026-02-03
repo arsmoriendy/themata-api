@@ -27,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
     // init db
     sqlx::any::install_default_drivers();
     let db = Arc::new(DB {
-        pool: Pool::connect(&env::DB_URL).await?,
+        pool: Pool::connect(&env::DATABASE_URL).await?,
     });
 
     // init redis
