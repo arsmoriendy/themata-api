@@ -1,0 +1,14 @@
+[sqruff]
+dialect = postgres
+
+[sqruff:indentation]
+tab_space_size = 2
+
+[sqruff:rules:capitalisation.keywords]
+capitalisation_policy = upper
+
+[sqruff:rules:capitalisation.literals]
+capitalisation_policy = upper
+
+[sqruff:rules:capitalisation.types]
+extended_capitalisation_policy = upper

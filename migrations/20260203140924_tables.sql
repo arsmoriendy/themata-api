@@ -1,0 +1,27 @@
+CREATE TABLE IF NOT EXISTS themes (
+  ulid BYTEA NOT NULL,
+  name CHARACTER VARYING NOT NULL,
+  schemes JSONB NOT NULL,
+  owner BYTEA NOT NULL,
+  description TEXT,
+  views BIGINT DEFAULT '0'::BIGINT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT (
+    now() AT TIME ZONE 'utc'::TEXT
+  ) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  email TEXT NOT NULL,
+  ulid BYTEA NOT NULL,
+  theme_count INTEGER DEFAULT 0 NOT NULL,
+  CONSTRAINT max_themes CHECK ((theme_count <= 32))
+);
+
+CREATE TABLE IF NOT EXISTS likes (
+  user_ulid BYTEA NOT NULL,
+  theme_ulid BYTEA NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS theme_count (
+  theme_count BIGINT DEFAULT 0 NOT NULL
+);
