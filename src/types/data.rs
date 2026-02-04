@@ -1,18 +1,9 @@
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::*, types::chrono::*};
+use sqlx::types::chrono::*;
 
 use crate::types::*;
 
-#[derive(FromRow, Serialize, Deserialize, Debug, Validate)]
-pub struct CreateData {
-    #[validate(length(min = 1, max = 32))]
-    pub name: String,
-    #[sqlx(json)]
-    #[validate(length(min = 1, max = 32), nested)]
-    pub schemes: Vec<ColorScheme>,
-    #[validate(length(max = 512))]
-    pub description: Option<String>,
-}
+pub type CreateData = Theme;
 
 #[derive(FromRow, Serialize, Deserialize, Debug, Validate)]
 pub struct ReadData {

@@ -21,7 +21,18 @@ pub struct JWTSessionClaims {
     pub email: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Validate)]
+#[derive(FromRow, Serialize, Deserialize, Debug, Validate, JsonSchema)]
+pub struct Theme {
+    #[validate(length(min = 1, max = 32))]
+    pub name: String,
+    #[sqlx(json)]
+    #[validate(length(min = 1, max = 32), nested)]
+    pub schemes: Vec<ColorScheme>,
+    #[validate(length(max = 512))]
+    pub description: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Validate, JsonSchema)]
 pub struct ColorScheme {
     #[validate(length(min = 1, max = 32))]
     name: String,
@@ -29,12 +40,12 @@ pub struct ColorScheme {
     colors: Vec<Color>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Validate)]
+#[derive(Serialize, Deserialize, Debug, Validate, JsonSchema)]
 pub struct Color {
     #[validate(length(min = 1, max = 32))]
     name: String,
     rgb: Rgb,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, JsonSchema)]
 pub struct Rgb(u8, u8, u8);

@@ -22,4 +22,5 @@ export!(
     like,
     unlike,
     liked,
+    schema,
 );

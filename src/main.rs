@@ -47,6 +47,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/like/{ulid}", post(handlers::like))
         .route("/unlike/{ulid}", delete(handlers::unlike))
         .route("/liked/{ulid}", get(handlers::liked))
+        .route("/schema", get(handlers::schema))
         .layer(CorsLayer::permissive())
         .with_state(AppState { db: db.clone() });
 
