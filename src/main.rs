@@ -18,7 +18,12 @@ use crate::{env::ensure_envs, types::*};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // load .env
-    dotenv()?;
+    if let Err(e) = dotenv()
+        && !e.not_found()
+    {
+        return Err(anyhow!("{e}"));
+    }
+
     ensure_envs();
 
     // start logging
