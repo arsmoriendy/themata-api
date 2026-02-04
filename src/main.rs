@@ -9,7 +9,7 @@ use axum::{
     routing::{delete, get, post, put},
 };
 use dotenvy::dotenv;
-use sqlx::Pool;
+use sqlx::{Pool, migrate};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 
@@ -34,6 +34,7 @@ async fn main() -> anyhow::Result<()> {
     let db = Arc::new(DB {
         pool: Pool::connect(&env::DATABASE_URL).await?,
     });
+    migrate!("./migrations").run(&db.pool).await?;
 
     // init redis
     let rd = redis::Client::open(env::REDIS_URL.clone())?

@@ -2311,7 +2311,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "themata-be"
+name = "themata-api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
