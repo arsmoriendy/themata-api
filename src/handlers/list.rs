@@ -4,12 +4,14 @@ use tracing::instrument;
 
 use crate::{ListData, types::*};
 
-#[instrument(skip(db))]
+#[instrument(skip(db, metrics))]
 pub async fn list(
-    State(AppState { db }): State<AppState>,
+    State(AppState { db, metrics }): State<AppState>,
     QueryMap(qm): QueryMap,
     Session(mut s): Session,
 ) -> Result<AxumJson<Vec<ListData>>, StatusCode> {
+    let _latency_observer = metrics.observe_req_latency("list");
+
     const MAX_PER_PAGE: i64 = 100;
     const DEFAULT_PER_PAGE: i64 = 10;
 

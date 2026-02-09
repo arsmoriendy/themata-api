@@ -5,13 +5,15 @@ use tracing::instrument;
 
 use crate::{UpdateData, types::*, ulid::Ulid};
 
-#[instrument(skip(db))]
+#[instrument(skip(db, metrics))]
 pub async fn update(
     ValidSession(user_ulid): ValidSession,
-    State(AppState { db }): State<AppState>,
+    State(AppState { db, metrics }): State<AppState>,
     UrlPath(theme_ulid): UrlPath<Ulid>,
     Valid(AxumJson(update_data)): Valid<AxumJson<UpdateData>>,
 ) -> StatusCode {
+    let _latency_observer = metrics.observe_req_latency("update");
+
     let Ok(res) = db.read_theme_owner(&theme_ulid).await else {
         return StatusCode::INTERNAL_SERVER_ERROR;
     };

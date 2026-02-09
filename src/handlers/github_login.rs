@@ -13,11 +13,13 @@ pub struct GithubQueryParams {
     code: String,
 }
 
-#[instrument(skip(db))]
+#[instrument(skip(db, metrics))]
 pub async fn github_login(
-    State(AppState { db }): State<AppState>,
+    State(AppState { db, metrics }): State<AppState>,
     UrlQuery(GithubQueryParams { code }): UrlQuery<GithubQueryParams>,
 ) -> Response {
+    let _latency_observer = metrics.observe_req_latency("github_login");
+
     // TODO: handle errors better
     let client = match ClientBuilder::new()
         .user_agent(&*env::GITHUB_APP_NAME)

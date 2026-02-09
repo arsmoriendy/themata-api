@@ -9,6 +9,7 @@ use axum::{
     routing::{delete, get, post, put},
 };
 use dotenvy::dotenv;
+use prometheus_client::registry::Registry;
 use sqlx::{Pool, migrate};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
@@ -41,7 +42,20 @@ async fn main() -> anyhow::Result<()> {
         .get_multiplexed_async_connection()
         .await?;
 
-    let app = Router::new()
+    let metrics = Metrics::default();
+    let mut metrics_registry = Registry::default();
+    metrics_registry.register(
+        "req_latency_sec",
+        "Request latency in seconds",
+        metrics.req_latency_sec.clone(),
+    );
+
+    let state = AppState {
+        db: db.clone(),
+        metrics: Arc::new(metrics),
+    };
+
+    let server_app = Router::new()
         .route("/list", get(handlers::list))
         .route("/create", post(handlers::create))
         .route("/read/{ulid}", get(handlers::read))
@@ -54,11 +68,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/unlike/{ulid}", delete(handlers::unlike))
         .route("/liked/{ulid}", get(handlers::liked))
         .route("/schema", get(handlers::schema))
-        .layer(CorsLayer::permissive())
-        .with_state(AppState { db: db.clone() });
-
-    let listener = tokio::net::TcpListener::bind(&*env::LISTEN_ADDR).await?;
-    let server_handle = tokio::spawn(async { axum::serve(listener, app).await });
+        .with_state(state)
+        .route("/metrics", get(handlers::metrics))
+        .with_state(Arc::new(metrics_registry))
+        .layer(CorsLayer::permissive());
+    let server_listener = tokio::net::TcpListener::bind(&*env::LISTEN_ADDR).await?;
+    let server_handle = tokio::spawn(async { axum::serve(server_listener, server_app).await });
 
     let rd2 = rd.clone();
     let db2 = db.clone();

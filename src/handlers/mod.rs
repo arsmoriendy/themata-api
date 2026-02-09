@@ -23,4 +23,5 @@ export!(
     unlike,
     liked,
     schema,
+    metrics,
 );

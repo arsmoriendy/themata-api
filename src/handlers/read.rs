@@ -4,11 +4,13 @@ use tracing::instrument;
 
 use crate::{ReadData, types::*, ulid::Ulid};
 
-#[instrument(skip(db))]
+#[instrument(skip(db, metrics))]
 pub async fn read(
-    State(AppState { db }): State<AppState>,
+    State(AppState { db, metrics }): State<AppState>,
     UrlPath(ulid): UrlPath<Ulid>,
 ) -> Result<AxumJson<ReadData>, StatusCode> {
+    let _latency_observer = metrics.observe_req_latency("read");
+
     let row = db
         .read_theme(&ulid)
         .await

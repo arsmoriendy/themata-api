@@ -2,17 +2,20 @@ pub mod data;
 pub mod db;
 pub mod external_exports;
 pub mod internal_exports;
+pub mod metrics;
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
 pub use data::*;
 pub use db::*;
 pub use external_exports::*;
 pub use internal_exports::*;
+pub use metrics::*;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: Arc<DB>,
+    pub metrics: Arc<Metrics>,
 }
 
 #[derive(Serialize, Deserialize)]

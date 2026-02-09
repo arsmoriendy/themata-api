@@ -17,7 +17,7 @@ impl FromRequestParts<AppState> for Session {
 
     async fn from_request_parts(
         parts: &mut RequestParts,
-        AppState { db }: &AppState,
+        AppState { db, metrics: _ }: &AppState,
     ) -> Result<Self, Self::Rejection> {
         // inherit bearer extractor
         let TypedHeader(Authorization(bearer)) =

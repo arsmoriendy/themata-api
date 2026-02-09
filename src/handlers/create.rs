@@ -5,12 +5,14 @@ use tracing::instrument;
 
 use crate::{CreateData, types::*};
 
-#[instrument(skip(db))]
+#[instrument(skip(db, metrics))]
 pub async fn create(
     ValidSession(user_ulid): ValidSession,
-    State(AppState { db }): State<AppState>,
+    State(AppState { db, metrics }): State<AppState>,
     Valid(AxumJson(create_data)): Valid<AxumJson<CreateData>>,
 ) -> Response {
+    let _latency_observer = metrics.observe_req_latency("create");
+
     match db.create_theme(&create_data, &user_ulid).await {
         Ok(ulid) => ulid.0.to_string().into_response(),
         Err(e) => {
