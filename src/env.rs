@@ -20,6 +20,7 @@ ENV![
     GITHUB_CLIENT_SECRET,
     GITHUB_APP_NAME,
     JWT_SECRET,
+    METRICS_SECRET_HASH,
 ];
 
 pub fn ensure_envs() {
@@ -32,6 +33,7 @@ pub fn ensure_envs() {
         &GITHUB_CLIENT_SECRET,
         &GITHUB_APP_NAME,
         &JWT_SECRET,
+        &METRICS_SECRET_HASH,
     ] {
         LazyLock::force(v);
     }

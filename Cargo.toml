@@ -44,3 +44,4 @@ ulid = { version = "1.2.1" }
 axum-valid = "0.24.0"
 schemars = "1.2.1"
 prometheus-client = "0.24.0"
+twox-hash = "2.1.2"
