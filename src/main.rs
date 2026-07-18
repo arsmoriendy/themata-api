@@ -4,6 +4,7 @@ mod handlers;
 mod types;
 mod ulid;
 
+use anyhow::Context;
 use axum::{
     Router,
     routing::{delete, get, post, put},
@@ -77,7 +78,7 @@ async fn main() -> anyhow::Result<()> {
 
     let rd2 = rd.clone();
     let db2 = db.clone();
-    let agg_views_handle = tokio::spawn(async { agg_views(rd2, db2).await });
+    let agg_views_handle = tokio::spawn(async { init_agg_views_loop(rd2, db2).await });
 
     server_handle.await??;
     agg_views_handle.await??;
@@ -88,46 +89,50 @@ const REDIS_VIEW_KEYSET_KEY: &str = "keys:views";
 const AGGREGATE_VIEWS_INTERVAL: Duration = Duration::from_secs(1);
 
 #[tracing::instrument(skip_all)]
-async fn agg_views(
-    mut rd: redis::aio::MultiplexedConnection,
+async fn init_agg_views_loop(
+    rd: redis::aio::MultiplexedConnection,
     db: Arc<DB>,
 ) -> Result<(), redis::RedisError> {
-    use redis::AsyncTypedCommands;
-
     let mut ticker = tokio::time::interval(AGGREGATE_VIEWS_INTERVAL);
     loop {
         ticker.tick().await;
 
-        let views_keyset = rd.smembers(REDIS_VIEW_KEYSET_KEY).await?;
-        for view_key in views_keyset {
-            // retreive ulid from key
-            let ulid_str = &view_key[6..];
-            let Ok(primitive_ulid) = PrimitiveUlid::from_string(&ulid_str) else {
-                tracing::warn!("malformed redis view key: {}", &view_key);
-                continue;
-            };
-            let ulid = Ulid(primitive_ulid);
+        if let Err(e) = agg_views(rd.clone(), db.clone()).await {
+            tracing::error!("{e}")
+        }
+    }
+}
 
-            // convert vews
-            let Ok(i64_views) = i64::try_from(rd.scard(&view_key).await?) else {
-                tracing::error!("failed to convert views to i64");
-                continue;
-            };
+#[tracing::instrument(skip_all)]
+async fn agg_views(mut rd: redis::aio::MultiplexedConnection, db: Arc<DB>) -> anyhow::Result<()> {
+    use redis::AsyncTypedCommands;
+    let views_keyset = rd.smembers(REDIS_VIEW_KEYSET_KEY).await?;
+    for view_key in views_keyset {
+        // retreive ulid from key
+        let ulid_str = &view_key[6..];
 
-            // incement db
-            let Ok(()) = db.increment_views_by(&ulid, i64_views).await else {
-                tracing::warn!(
+        let primitive_ulid = PrimitiveUlid::from_string(&ulid_str)
+            .with_context(|| format!("malformed redis view key: {}", &view_key))?;
+        let ulid = Ulid(primitive_ulid);
+
+        // convert views
+        let i64_views = i64::try_from(rd.scard(&view_key).await?)
+            .with_context(|| "failed to convert views to i64")?;
+
+        // incement db
+        db.increment_views_by(&ulid, i64_views)
+            .await
+            .with_context(|| {
+                format!(
                     "redis view key ulid: {}, does not exist in database",
                     ulid.0
-                );
-                continue;
-            };
+                )
+            })?;
 
-            rd.del(&view_key).await?;
-        }
-
-        rd.del(REDIS_VIEW_KEYSET_KEY).await?;
+        rd.del(&view_key).await?;
     }
+
+    Ok(())
 }
 
 fn get_session_user(jwt: &str) -> Result<Ulid, JwtError> {
