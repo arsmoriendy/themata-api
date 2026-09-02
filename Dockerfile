@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.21
 
-FROM rust:1.93-alpine3.23 as build-stage
+FROM rust:1.93-alpine3.23 AS build-stage
 
 WORKDIR /usr/src/themata-api
 
