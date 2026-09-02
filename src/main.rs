@@ -86,14 +86,14 @@ async fn main() -> anyhow::Result<()> {
 }
 
 const REDIS_VIEW_KEYSET_KEY: &str = "keys:views";
-const AGGREGATE_VIEWS_INTERVAL: Duration = Duration::from_secs(1);
 
 #[tracing::instrument(skip_all)]
 async fn init_agg_views_loop(
     rd: redis::aio::MultiplexedConnection,
     db: Arc<DB>,
 ) -> Result<(), redis::RedisError> {
-    let mut ticker = tokio::time::interval(AGGREGATE_VIEWS_INTERVAL);
+    let interval = Duration::from_millis(env::AGGREGATE_VIEWS_INTERVAL.parse().unwrap());
+    let mut ticker = tokio::time::interval(interval);
     loop {
         ticker.tick().await;
 

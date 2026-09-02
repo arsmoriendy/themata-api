@@ -21,6 +21,7 @@ ENV![
     GITHUB_APP_NAME,
     JWT_SECRET,
     METRICS_SECRET_HASH,
+    AGGREGATE_VIEWS_INTERVAL
 ];
 
 pub fn ensure_envs() {
@@ -34,6 +35,7 @@ pub fn ensure_envs() {
         &GITHUB_APP_NAME,
         &JWT_SECRET,
         &METRICS_SECRET_HASH,
+        &AGGREGATE_VIEWS_INTERVAL,
     ] {
         LazyLock::force(v);
     }
